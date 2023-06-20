@@ -1,0 +1,26 @@
+---
+- name: Change the Group Policy setting to allow direct download
+  win_regedit:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Servicing
+    name: RepairContentServerSource
+    data: 2
+    type: dword
+    state: present
+
+- name: Install .NET Framework 3.5
+  win_feature:
+    name: 'NET-Framework-Core'
+    state: present
+    include_sub_features: yes
+    include_management_tools: yes
+    register: win_feature
+
+- name: Reboot if installing NET-Framework-Core feature requires it
+  ansible.windows.win_reboot:
+  when: win_feature.reboot_required is defined and win_feature.reboot_required
+
+- name: Revert the Group Policy setting
+  win_regedit:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Servicing
+    name: RepairContentServerSource
+    state: absent
